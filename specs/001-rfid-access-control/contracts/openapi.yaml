@@ -1,0 +1,546 @@
+openapi: 3.1.0
+info:
+  title: ECU 911 RFID Access Control API
+  version: 1.0.0
+  description: REST contract for software-submitted RFID access management and audit review.
+servers:
+  - url: /api
+    description: Same-origin Next.js Route Handlers
+security:
+  - sessionCookie: []
+tags:
+  - name: Authentication
+  - name: Employees
+  - name: RFID Cards
+  - name: Doors
+  - name: Access Events
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      security: []
+      summary: Create an authenticated session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Session created; response contains a safe user summary and sets an HttpOnly cookie.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Revoke the current session
+      responses:
+        '204':
+          description: Session revoked and cookie cleared.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get the current authenticated user
+      responses:
+        '200':
+          description: Authenticated user summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /employees:
+    get:
+      tags: [Employees]
+      summary: List employees
+      responses:
+        '200':
+          description: Employee collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Employees]
+      summary: Create an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeInput'
+      responses:
+        '201':
+          description: Employee created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /employees/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [Employees]
+      summary: Get one employee
+      responses:
+        '200':
+          description: Employee.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Employees]
+      summary: Update or deactivate an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeUpdate'
+      responses:
+        '200':
+          description: Employee updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /rfid-cards:
+    get:
+      tags: [RFID Cards]
+      summary: List RFID cards without raw identifiers
+      responses:
+        '200':
+          description: Card collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RfidCardList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [RFID Cards]
+      summary: Register an RFID card to an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RfidCardInput'
+      responses:
+        '201':
+          description: Card registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RfidCard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /rfid-cards/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [RFID Cards]
+      summary: Get one RFID card without its raw identifier
+      responses:
+        '200':
+          description: Card.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RfidCard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [RFID Cards]
+      summary: Update assignment or deactivate a card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RfidCardUpdate'
+      responses:
+        '200':
+          description: Card updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RfidCard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /doors:
+    get:
+      tags: [Doors]
+      summary: List doors
+      responses:
+        '200':
+          description: Door collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoorList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Doors]
+      summary: Create a door
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoorInput'
+      responses:
+        '201':
+          description: Door created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Door'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /doors/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [Doors]
+      summary: Get one door
+      responses:
+        '200':
+          description: Door.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Door'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Doors]
+      summary: Update or deactivate a door
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoorUpdate'
+      responses:
+        '200':
+          description: Door updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Door'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /access-events:
+    get:
+      tags: [Access Events]
+      summary: List append-only access events with combined filters
+      parameters:
+        - in: query
+          name: employeeId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: rfidCardId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: doorId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: start
+          description: Inclusive UTC timestamp.
+          schema: { type: string, format: date-time }
+        - in: query
+          name: end
+          description: Exclusive UTC timestamp.
+          schema: { type: string, format: date-time }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Filtered event page. All supplied filters are combined with AND.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessEventPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    post:
+      tags: [Access Events]
+      summary: Record a software-submitted access attempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessEventInput'
+      responses:
+        '201':
+          description: Event persisted after trusted state evaluation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessEvent'
+        '400':
+          description: Malformed JSON or request shape.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+  parameters:
+    ResourceId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Unauthorized:
+      description: Missing or invalid session.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: Authenticated user lacks the required role.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Conflict:
+      description: Uniqueness or state conflict.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ValidationError:
+      description: Invalid request data.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            fields:
+              type: object
+              additionalProperties: { type: array, items: { type: string } }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 12 }
+    UserSummary:
+      type: object
+      required: [id, email, role]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { type: string, enum: [ADMIN, OPERATOR] }
+    EmployeeInput:
+      type: object
+      required: [employeeNumber, fullName]
+      properties:
+        employeeNumber: { type: string, minLength: 1, maxLength: 50 }
+        fullName: { type: string, minLength: 1, maxLength: 150 }
+        email: { type: string, format: email }
+    EmployeeUpdate:
+      allOf:
+        - $ref: '#/components/schemas/EmployeeInput'
+        - type: object
+          properties:
+            isActive: { type: boolean }
+    Employee:
+      allOf:
+        - $ref: '#/components/schemas/EmployeeInput'
+        - type: object
+          required: [id, isActive, createdAt, updatedAt]
+          properties:
+            id: { type: string, format: uuid }
+            isActive: { type: boolean }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    EmployeeList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Employee' } }
+    RfidCardInput:
+      type: object
+      required: [identifier, employeeId]
+      properties:
+        identifier: { type: string, minLength: 1, writeOnly: true }
+        employeeId: { type: string, format: uuid }
+    RfidCardUpdate:
+      type: object
+      properties:
+        employeeId: { type: string, format: uuid }
+        isActive: { type: boolean }
+    RfidCard:
+      type: object
+      required: [id, employeeId, isActive, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        employeeId: { type: string, format: uuid, nullable: true }
+        identifierLast4: { type: string, nullable: true }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    RfidCardList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/RfidCard' } }
+    DoorInput:
+      type: object
+      required: [code, name, location]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 50 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        location: { type: string, minLength: 1, maxLength: 150 }
+    DoorUpdate:
+      allOf:
+        - $ref: '#/components/schemas/DoorInput'
+        - type: object
+          properties:
+            isActive: { type: boolean }
+    Door:
+      allOf:
+        - $ref: '#/components/schemas/DoorInput'
+        - type: object
+          required: [id, isActive, createdAt, updatedAt]
+          properties:
+            id: { type: string, format: uuid }
+            isActive: { type: boolean }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    DoorList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Door' } }
+    AccessEventInput:
+      type: object
+      required: [employeeId, doorId]
+      properties:
+        employeeId: { type: string, format: uuid }
+        rfidCardId: { type: string, format: uuid, nullable: true }
+        doorId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+        idempotencyKey: { type: string, maxLength: 100 }
+    AccessEvent:
+      type: object
+      required: [id, employeeId, doorId, decision, reason, occurredAt, recordedAt]
+      properties:
+        id: { type: string, format: uuid }
+        employeeId: { type: string, format: uuid }
+        rfidCardId: { type: string, format: uuid, nullable: true }
+        doorId: { type: string, format: uuid }
+        decision: { type: string, enum: [GRANTED, DENIED] }
+        reason: { type: string }
+        occurredAt: { type: string, format: date-time }
+        recordedAt: { type: string, format: date-time }
+    AccessEventPage:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AccessEvent' } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
