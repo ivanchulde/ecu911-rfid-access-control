@@ -5,9 +5,43 @@
 **Status**: Draft  
 **Input**: User description: "Create the ECU 911 RFID Access Control System, a web application for managing and monitoring access to facilities using RFID cards."
 
+## Project Overview
+
+### Project Title & Description
+
+**ECU 911 RFID Access Control System** is a web application and REST API for managing and monitoring facility access through registered RFID cards. Authorized users can maintain employee, RFID card, and door records; submit software-based RFID access attempts; and review centralized access history.
+
+The MVP does not connect directly to physical RFID readers. Access attempts are submitted by the web application or an authorized software client so that hardware integration can be added later without changing the core access-management model.
+
+### Purpose & Target Audience
+
+The system exists to provide ECU 911 facility administrators and authorized operations staff with a reliable, auditable way to manage credentials, control door records, record access decisions, and investigate access activity.
+
+The target audience is:
+
+- **Administrators** who manage employees, RFID cards, doors, and user access.
+- **Operations staff** who submit or review access events within their permissions.
+- **System maintainers** who operate the web application and REST API without needing physical RFID hardware in the MVP.
+
+### Implementation Priority
+
+Priorities describe delivery order, not whether a capability belongs in the MVP:
+
+- **P0 - Critical foundation**: User authentication and authorization; software-submitted RFID access-event recording and trusted granted/denied decisions.
+- **P1 - Core administration**: Employee CRUD, RFID card registration and lifecycle management, and door CRUD.
+- **P2 - Operational review**: Centralized access-record viewing and filtering by employee, RFID card, door, and date range.
+
+All P0, P1, and P2 capabilities are included in the MVP. Physical RFID reader integration is out of scope.
+
+## Clarifications
+
+### Session 2026-09-19
+
+- Q: How should the MVP capabilities be distributed across P0, P1, and P2 implementation priorities? → A: P0 authentication and access events; P1 employee, RFID card, and door administration; P2 centralized filtering.
+
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Sign in to the access system (Priority: P1)
+### User Story 1 - Sign in to the access system (Priority: P0)
 
 As an authorized system user, I want to sign in securely so that only permitted staff can manage access information and view records.
 
@@ -50,7 +84,7 @@ As an authorized administrator, I want to create, view, update, and deactivate f
 2. **Given** an existing door, **When** an administrator updates its name or location details, **Then** subsequent views show the updated information without changing historical event references.
 3. **Given** an inactive door, **When** a user attempts to record access for it, **Then** the system rejects the operation and retains existing historical records.
 
-### User Story 4 - Record an RFID access event (Priority: P1)
+### User Story 4 - Record an RFID access event (Priority: P0)
 
 As an authorized system user, I want to record an RFID access attempt against an employee, card, and door so that facility access is traceable even without direct hardware integration.
 
@@ -65,7 +99,7 @@ As an authorized system user, I want to record an RFID access attempt against an
 3. **Given** a card assigned to a different employee than the employee supplied in the request, **When** the request is submitted, **Then** the system rejects or records it as denied according to the access policy and does not record a falsely successful event.
 4. **Given** malformed or incomplete event data, **When** the request is submitted, **Then** the system returns a validation error and creates no event.
 
-### User Story 5 - Review and filter centralized access records (Priority: P1)
+### User Story 5 - Review and filter centralized access records (Priority: P2)
 
 As an authorized user, I want to view centralized access records and filter them by employee, RFID card, door, and date range so that I can investigate facility activity.
 
@@ -89,6 +123,38 @@ As an authorized user, I want to view centralized access records and filter them
 - Empty filter values, partially supplied date ranges, and invalid filter formats MUST return validation feedback rather than broadening the query unexpectedly.
 - Database or dependent-service failures MUST show a recoverable user-facing error and MUST not report an event as successfully recorded when persistence was not confirmed.
 - The MVP MUST support software-submitted access attempts and MUST NOT require a physical RFID reader or other hardware connection.
+
+## Technical Requirements
+
+- **TR-001**: The application MUST use Next.js App Router with file-based routing, Server Components by default, and Client Components only where browser APIs or interactive state require them.
+- **TR-002**: Application code MUST use TypeScript strict mode, MUST NOT use `any`, and MUST define clear types and interfaces at module boundaries.
+- **TR-003**: The interface MUST use Tailwind CSS with a utility-first approach and MUST remain responsive and accessible through keyboard navigation, semantic labels, visible focus states, sufficient contrast, and understandable validation errors.
+- **TR-004**: The system MUST use PostgreSQL with Prisma ORM and preserve relationships among users, employees, RFID cards, card assignments, doors, and access events.
+- **TR-005**: Authentication MUST use server-managed sessions, secure password handling, protected cookies, and server-side authorization with at least administrator and operational-user permissions.
+- **TR-006**: REST endpoints MUST be implemented with Next.js Route Handlers, validate request bodies, route parameters, query parameters, and headers, and return appropriate HTTP status codes with stable error responses.
+- **TR-007**: Access events MUST use a documented UTC timestamp policy and record the employee, RFID card when known, door, date/time, decision, and reason or failure category.
+- **TR-008**: Employees, RFID cards, and doors MUST be deactivated rather than destructively deleted when historical access events reference them.
+- **TR-009**: The system MUST test authentication, authorization, CRUD operations, API contracts, validation, duplicate/conflict cases, denied access decisions, filtering, error handling, accessibility, and responsive workflows.
+
+## Core API Endpoints
+
+All endpoints are served under `/api`, require authentication unless marked public, and return consistent JSON error objects without secrets, raw RFID identifiers, or internal stack traces.
+
+| Method | Endpoint | Priority | Purpose |
+|---|---|---:|---|
+| `POST` | `/auth/login` | P0 | Authenticate a user and create a server-managed session. |
+| `POST` | `/auth/logout` | P0 | Revoke the current session and clear its cookie. |
+| `GET` | `/auth/me` | P0 | Return the authenticated user summary. |
+| `GET` / `POST` | `/employees` | P1 | List employees or create an employee. |
+| `GET` / `PATCH` | `/employees/{id}` | P1 | View, update, or deactivate an employee. |
+| `GET` / `POST` | `/rfid-cards` | P1 | List cards or register a card to an employee. |
+| `GET` / `PATCH` | `/rfid-cards/{id}` | P1 | View, reassign, update, or deactivate a card. |
+| `GET` / `POST` | `/doors` | P1 | List doors or create a door. |
+| `GET` / `PATCH` | `/doors/{id}` | P1 | View, update, or deactivate a door. |
+| `POST` | `/access-events` | P0 | Record a software-submitted access attempt and derive its decision from trusted state. |
+| `GET` | `/access-events` | P2 | View and filter centralized access events by employee, card, door, and date range. |
+
+The API MUST return `401` for missing or invalid authentication, `403` for insufficient permissions, `404` for missing resources, `409` for uniqueness or state conflicts, and `422` for semantically invalid input. Access events MUST NOT expose update or delete endpoints in the MVP.
 
 ## Requirements *(mandatory)*
 

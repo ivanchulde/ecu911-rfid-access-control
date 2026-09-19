@@ -33,6 +33,7 @@
 
 ## Notes
 
-- Validation completed after the initial specification pass.
-- The feature is ready for `/speckit.plan`.
+- Validation completed after the clarification pass against the assignment structure.
+- The specification now includes a project overview, purpose and audience, P0/P1/P2 implementation priorities, technical requirements, and a core API endpoint catalog.
+- The feature remains ready for implementation planning and task execution.
 - The MVP records software-submitted access attempts; physical reader communication remains a future enhancement.

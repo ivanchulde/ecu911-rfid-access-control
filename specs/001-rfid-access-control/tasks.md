@@ -49,7 +49,7 @@
 
 ---
 
-## Phase 3: User Story 1 - Sign In to the Access System (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Sign In to the Access System (Priority: P0) 🎯 MVP
 
 **Goal**: Authorized users can authenticate, access protected pages/API routes, and sign out without exposing credentials or session secrets.
 
@@ -135,7 +135,7 @@
 
 ---
 
-## Phase 6: User Story 4 - Record an RFID Access Event (Priority: P1)
+## Phase 6: User Story 4 - Record an RFID Access Event (Priority: P0)
 
 **Goal**: Authorized software clients can submit access attempts and receive trusted granted/denied decisions persisted with complete audit context.
 
@@ -161,7 +161,7 @@
 
 ---
 
-## Phase 7: User Story 5 - Review and Filter Centralized Access Records (Priority: P1)
+## Phase 7: User Story 5 - Review and Filter Centralized Access Records (Priority: P2)
 
 **Goal**: Authorized users can review paginated access events and combine employee, card, door, and UTC date-range filters with AND semantics.
 
@@ -220,11 +220,11 @@
 
 ### User Story Dependencies
 
-- **US1 (P1)**: Starts after Phase 2; independent MVP for authentication and protected shell.
+- **US1 (P0)**: Starts after Phase 2; independent MVP for authentication and protected shell.
 - **US2 (P1)**: Starts after Phase 2; uses US1 auth guards but does not depend on event recording.
 - **US3 (P1)**: Starts after Phase 2; uses US1 auth guards but does not depend on US2.
-- **US4 (P1)**: Depends on US2's employee/card and assignment services plus US3's door services.
-- **US5 (P1)**: Depends on US4's persisted event shape and queryable entity relationships.
+- **US4 (P0)**: Depends on US2's employee/card and assignment services plus US3's door services.
+- **US5 (P2)**: Depends on US4's persisted event shape and queryable entity relationships.
 
 ### Within Each User Story
 
